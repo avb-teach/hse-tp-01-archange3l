@@ -27,8 +27,9 @@ m = {}
 for r, ds, fs in os.walk(i):
     for f in fs:
         s = os.path.join(r, f)
-        rel_path = os.path.relpath(s, i)  
-        depth = rel_path.count(os.sep)   
+        
+        rel_dir = os.path.relpath(os.path.dirname(s), i)
+        depth = 0 if rel_dir == '.' else rel_dir.count(os.sep) + 1
 
         if d is not None and depth >= d:
             continue
