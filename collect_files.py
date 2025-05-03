@@ -9,7 +9,7 @@ if len(a) < 2:
     sys.exit(1)
 
 i = a[0]
-o = a[1]
+o = a[1]90909
 d = None
 
 if len(a) == 4 and a[2] == "--max_depth":
