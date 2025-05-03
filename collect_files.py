@@ -1,47 +1,52 @@
+#!/usr/bin/env python3
 import os
 import sys
 import shutil
 
-a = sys.argv[1:]
+def collect_files(input_dir, output_dir, max_depth=None):
+    os.makedirs(output_dir, exist_ok=True)
+    seen = {}
 
-if len(a) < 2:
-    print("Usage: collect_files.py input_dir output_dir [--max_depth N]")
-    sys.exit(1)
+    for root, dirs, files in os.walk(input_dir):
+        for fname in files:
+            src = os.path.join(root, fname)
 
-i = a[0]
-o = a[1]
-d = None
+            rel = os.path.relpath(os.path.dirname(src), input_dir)
+            chain = [] if rel == '.' else rel.split(os.sep)
+            if max_depth is not None:
+                allowed = max_depth - 1
+                if len(chain) > allowed:
+                    chain = chain[-allowed:]
 
-if len(a) == 4 and a[2] == "--max_depth":
-    try:
-        d = int(a[3])
-    except ValueError:
-        print("Error: max_depth must be an integer")
+            target_dir = os.path.join(output_dir, *chain) if chain else output_dir
+            os.makedirs(target_dir, exist_ok=True)
+
+            key = (target_dir, fname)
+            if key in seen:
+                base, ext = os.path.splitext(fname)
+                out_name = f"{base}{seen[key]}{ext}"
+                seen[key] += 1
+            else:
+                out_name = fname
+                seen[key] = 1
+
+            shutil.copy2(src, os.path.join(target_dir, out_name))
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: collect_files.py input_dir output_dir [--max_depth N]")
         sys.exit(1)
 
-if not os.path.exists(o):
-    os.makedirs(o)
+    inp, out = sys.argv[1], sys.argv[2]
+    md = None
+    if len(sys.argv) == 5 and sys.argv[3] == "--max_depth":
+        try:
+            md = int(sys.argv[4])
+            if md < 1:
+                raise ValueError()
+        except ValueError:
+            print("Error: max_depth must be a positive integer")
+            sys.exit(1)
 
-m = {}
-
-for r, ds, fs in os.walk(i):
-    for f in fs:
-        s = os.path.join(r, f)
-        
-        rel_dir = os.path.relpath(os.path.dirname(s), i)
-        depth = 0 if rel_dir == '.' else rel_dir.count(os.sep) + 1
-
-        if d is not None and depth >= d:
-            continue
-
-        t = f
-        if t in m:
-            b, e = os.path.splitext(f)
-            c = m[f]
-            t = f"{b}{c}{e}"
-            m[f] = c + 1
-        else:
-            m[f] = 1
-
-        x = os.path.join(o, t)
-        shutil.copy2(s, x)
+    collect_files(inp, out, max_depth=md)
