@@ -9,7 +9,7 @@ if len(a) < 2:
     sys.exit(1)
 
 i = a[0]
-o = a[1]90909
+o = a[1]
 d = None
 
 if len(a) == 4 and a[2] == "--max_depth":
@@ -25,16 +25,15 @@ if not os.path.exists(o):
 m = {}
 
 for r, ds, fs in os.walk(i):
-    p = os.path.relpath(r, i)
-    lvl = p.count(os.sep)
-
-    if d is not None and lvl >= d:
-        continue
-
     for f in fs:
         s = os.path.join(r, f)
-        t = f
+        rel_path = os.path.relpath(s, i)  
+        depth = rel_path.count(os.sep)   
 
+        if d is not None and depth >= d:
+            continue
+
+        t = f
         if t in m:
             b, e = os.path.splitext(f)
             c = m[f]
